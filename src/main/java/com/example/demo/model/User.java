@@ -18,6 +18,9 @@ public class User {
         this.password = password;
         this.role = role;
     }
+//Create For Transaction Managment
+    public User(String u001, String johnSmith, String mail) {
+    }
 
     // Getters and Setters (Encapsulation)
     public String getId() { return id; }

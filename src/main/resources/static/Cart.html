@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transaction Cart</title>
+  <style>
+    /* Your existing styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f9f9f9;
+    }
+    .container {
+      max-width: 500px;
+      background: white;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+    }
+    select {
+      width: 100%;
+      height: 120px;
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    .total {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      font-size: 16px;
+      padding: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Transaction Management</h2>
+  <label for="titles-select">Select Titles (you can select multiple):</label>
+  <select id="titles-select" multiple></select>
+
+  <div class="total">Total Amount: $<span id="total-amount">0.00</span></div>
+
+  <button id="complete-transaction" disabled>Transaction Complete</button>
+</div>
+
+<script>
+  const selectElem = document.getElementById("titles-select");
+  const totalAmountElem = document.getElementById("total-amount");
+  const completeBtn = document.getElementById("complete-transaction");
+
+  // We'll store properties fetched from backend here
+  let properties = [];
+
+  // Fetch properties from backend API and populate select
+  async function fetchProperties() {
+    try {
+      const response = await fetch('http://localhost:8080/properties/all'); // Change URL if needed
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      properties = await response.json();
+
+      // Populate select options
+      properties.forEach((property, idx) => {
+        const option = document.createElement('option');
+        option.value = idx; // index for lookup
+        option.textContent = `${property.title} - $${property.price.toFixed(2)}`;
+        selectElem.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      selectElem.innerHTML = '<option disabled>Error loading properties</option>';
+    }
+  }
+
+  // Calculate total amount
+  function calculateTotal() {
+    const selectedOptions = Array.from(selectElem.selectedOptions);
+    let total = 0;
+    selectedOptions.forEach(opt => {
+      const idx = parseInt(opt.value);
+      total += properties[idx].price;
+    });
+    totalAmountElem.textContent = total.toFixed(2);
+    completeBtn.disabled = selectedOptions.length === 0;
+  }
+
+  // Handle transaction complete
+  completeBtn.addEventListener("click", () => {
+    const selectedOptions = Array.from(selectElem.selectedOptions);
+    const selectedTitles = selectedOptions.map(opt => properties[parseInt(opt.value)].title);
+    const total = totalAmountElem.textContent;
+
+    alert(`Transaction Complete!\nSelected Titles: ${selectedTitles.join(", ")}\nTotal Amount: $${total}`);
+
+    // Reset
+    selectElem.selectedIndex = -1;
+    totalAmountElem.textContent = "0.00";
+    completeBtn.disabled = true;
+  });
+
+
+  completeBtn.addEventListener("click", async () => {
+    const selectedOptions = Array.from(selectElem.selectedOptions);
+    const total = totalAmountElem.textContent;
+
+    for (let opt of selectedOptions) {
+      const idx = parseInt(opt.value);
+      const property = properties[idx];
+
+      // POST request to create transaction
+      try {
+        const response = await fetch('http://localhost:8080/api/transactions/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            propertyId: "P" + Date.now(),  // dummy or generate based on property
+            title: property.title,
+            price: property.price
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to create transaction");
+
+        const transactionId = await response.text(); // Response is transaction ID
+
+        // Call complete transaction
+        await fetch(`http://localhost:8080/api/transactions/complete/${transactionId}`, {
+          method: 'POST'
+        });
+
+        console.log("Transaction completed for", transactionId);
+
+      } catch (error) {
+        console.error("Transaction error:", error);
+      }
+    }
+
+    alert(`Transaction(s) completed!\nTotal Amount: $${total}`);
+
+    // Reset UI
+    selectElem.selectedIndex = -1;
+    totalAmountElem.textContent = "0.00";
+    completeBtn.disabled = true;
+  });
+
+  // Event listener for select change
+  selectElem.addEventListener("change", calculateTotal);
+
+  // Initial fetch call
+  fetchProperties();
+</script>
+</body>
+</html>

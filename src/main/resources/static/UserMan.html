@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Management</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+
+        .background {
+            background-image: url('https://beyond-h2020.eu/wp-content/uploads/2022/11/house-g001b32d44_1920-1024x683.jpg'); /* Use your image path */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            color: white;
+        }
+
+        nav {
+            background-color: black;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            height: 60px;
+        }
+
+        .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 10px;
+            display: block;
+        }
+
+        nav ul li a:hover {
+            background-color: #333;
+        }
+
+        .container {
+            margin: 40px auto;
+            width: 90%;
+            max-width: 1000px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            color: black;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #444;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            margin: 2px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: #28a745;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+        }
+
+        h2 {
+            text-align: center;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+<div class="background">
+    <nav>
+        <div class="logo">Real Estate</div>
+        <ul>
+            <li><a href="Adminpage.html">Dashboard</a></li>
+            <!-- <li><a href="user-management.html">User Management</a></li>
+            <li><a href="property-management.html">Property Management</a></li> -->
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h2>User Management</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Password</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // When page loads
+    window.onload = function () {
+        fetchUsers();
+    };
+
+    // Function to fetch users from backend and add them to the table
+    function fetchUsers() {
+        fetch("http://localhost:8080/users")
+            .then(response => response.json())
+            .then(users => {
+                const tbody = document.querySelector("tbody");
+                tbody.innerHTML = ""; // Clear existing rows
+
+                users.forEach(user => {
+                    const tr = document.createElement("tr");
+                    tr.setAttribute("data-id", user.id); // Store user ID in row
+
+                    tr.innerHTML = `
+                        <td><span class="username">${user.name}</span><input class="edit-username" style="display:none;" value="${user.username}"/></td>
+                        <td><span class="email">${user.email}</span><input class="edit-email" style="display:none;" value="${user.email}"/></td>
+                        <td>********</td>
+                        <td>${user.role}</td>
+                        <td>
+                            <button class="btn btn-edit" onclick="editUser(this)">Edit</button>
+                            <button class="btn btn-delete" onclick="deleteUser('${user.id}')">Delete</button>
+                        </td>
+                    `;
+
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching users:", error);
+                alert("Failed to fetch users.");
+            });
+    }
+
+    // Toggle edit mode
+    function editUser(button) {
+        const tr = button.closest("tr");
+        const isEditing = button.textContent === "Save";
+
+        const nameSpan = tr.querySelector(".username");
+        const emailSpan = tr.querySelector(".email");
+        const nameInput = tr.querySelector(".edit-username");
+        const emailInput = tr.querySelector(".edit-email");
+
+        if (isEditing) {
+            // Save logic
+            const id = tr.getAttribute("data-id");
+            const updatedUser = {
+                name: nameInput.value,
+                email: emailInput.value
+            };
+
+            fetch(`http://localhost:8080/users/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(updatedUser)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        nameSpan.textContent = updatedUser.name;
+                        emailSpan.textContent = updatedUser.email;
+
+                        nameSpan.style.display = "inline";
+                        emailSpan.style.display = "inline";
+                        nameInput.style.display = "none";
+                        emailInput.style.display = "none";
+                        button.textContent = "Edit";
+                    } else {
+                        alert("Failed to update user.");
+                    }
+                });
+        } else {
+            // Enable edit mode
+            nameSpan.style.display = "none";
+            emailSpan.style.display = "none";
+            nameInput.style.display = "inline";
+            emailInput.style.display = "inline";
+            button.textContent = "Save";
+        }
+    }
+
+    // Delete user
+    function deleteUser(id) {
+        if (confirm("Are you sure you want to delete this user?")) {
+            fetch(`http://localhost:8080/users/${id}`, {
+                method: "DELETE"
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("User deleted successfully");
+                        fetchUsers(); // Reload the table
+                    } else {
+                        alert("Failed to delete user");
+                    }
+                });
+        }
+    }
+</script>
+
+
+</body>
+</html>

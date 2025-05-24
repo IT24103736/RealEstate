@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Feedback Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-image: url('https://beyond-h2020.eu/wp-content/uploads/2022/11/house-g001b32d44_1920-1024x683.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .container {
+            width: 600px;
+            margin: 50px auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        nav {
+            background-color: black;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            height: 60px;
+        }
+
+        .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 10px;
+            display: block;
+        }
+
+        nav ul li a:hover {
+            background-color: #333;
+        }
+
+        /* Style for Edit and Delete buttons */
+        button {
+            padding: 8px 16px;
+            margin: 0 4px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Edit button - blue */
+        button.edit-btn {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        button.edit-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Delete button - red */
+        button.delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        button.delete-btn:hover {
+            background-color: #a71d2a;
+        }
+
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">Real Estate</div>
+    <ul>
+        <li><a href="Adminpage.html">Dashboard</a></li>
+    </ul>
+</nav>
+
+<div class="container">
+    <h2>All Feedback</h2>
+    <div class="buttons">
+        <button onclick="loadFeedbacks()">Load All</button>
+        <button onclick="loadSortedFeedbacks()">Load Sorted by Rating</button>
+    </div>
+    <table id="feedbackTable">
+        <thead>
+        <tr>
+            <th>Property ID</th>
+            <th>User Email</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Submitted At</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8080/feedbacks";
+
+    function loadFeedbacks() {
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(data => populateTable(data))
+            .catch(err => console.error("Error loading feedbacks:", err));
+    }
+
+    function loadSortedFeedbacks() {
+        fetch(API_URL + "/sorted")
+            .then(res => res.json())
+            .then(data => populateTable(data))
+            .catch(err => console.error("Error loading sorted feedbacks:", err));
+    }
+
+    function populateTable(feedbacks) {
+        const tbody = document.getElementById("feedbackTable").querySelector("tbody");
+        tbody.innerHTML = "";
+        feedbacks.forEach(fb => {
+            const row = `<tr>
+        <td>${fb.propertyId}</td>
+        <td>${fb.userEmail}</td>
+        <td>${fb.rating}</td>
+        <td>${fb.comment}</td>
+        <td>${fb.submittedAt ? fb.submittedAt.replace("T", " ").slice(0, 19) : "N/A"}</td>
+        <td>
+                <button class="edit-btn" onclick='editFeedback(${JSON.stringify(fb)})'>Edit</button>
+        <button class="delete-btn" onclick='deleteFeedback("${fb.propertyId}", "${fb.userEmail}")'>Delete</button>
+            </td>
+      </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function loadSortedFeedbacks() {
+        fetch(API_URL + "/sorted")
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Network response was not ok ' + res.statusText);
+                }
+                return res.json();
+            })
+            .then(data => {
+                console.log("Sorted feedback data:", data);
+                populateTable(data);
+            })
+            .catch(err => {
+                console.error("Error loading sorted feedbacks:", err);
+                alert("Failed to load sorted feedbacks: " + err.message);
+            });
+    }
+
+    function editFeedback(feedback) {
+        // Prompt the user for updated fields (simplified example)
+        const newComment = prompt("Edit comment:", feedback.comment);
+        if (newComment === null) return; // user cancelled
+
+        const newRating = prompt("Edit rating (1-5):", feedback.rating);
+        if (newRating === null) return; // user cancelled
+
+        // Update feedback object
+        feedback.comment = newComment;
+        feedback.rating = parseInt(newRating);
+
+        // Send PUT request to backend to update
+        fetch(`${API_URL}/${feedback.propertyId}/${encodeURIComponent(feedback.userEmail)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(feedback)
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert("Feedback updated successfully.");
+                    loadFeedbacks();  // Reload table data
+                } else {
+                    return res.text().then(text => { throw new Error(text) });
+                }
+            })
+            .catch(err => alert("Failed to update feedback: " + err.message));
+    }
+
+    function deleteFeedback(propertyId, userEmail) {
+        if (!confirm(`Delete feedback for propertyId: ${propertyId} and userEmail: ${userEmail}?`)) return;
+
+        fetch(`${API_URL}/${propertyId}/${encodeURIComponent(userEmail)}`, {
+            method: "DELETE"
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert("Feedback deleted successfully.");
+                    loadFeedbacks();  // Reload table data
+                } else {
+                    return res.text().then(text => { throw new Error(text) });
+                }
+            })
+            .catch(err => alert("Failed to delete feedback: " + err.message));
+    }
+
+
+</script>
+
+</body>
+</html>

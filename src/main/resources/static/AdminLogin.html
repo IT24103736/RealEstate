@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    .background {
+      background-image: url('https://beyond-h2020.eu/wp-content/uploads/2022/11/house-g001b32d44_1920-1024x683.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      height: 100vh;
+      position: relative;
+      color: white;
+    }
+
+    nav {
+      background-color: black;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      height: 60px;
+    }
+
+    .logo {
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    nav ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+
+    nav ul li {
+      margin-left: 20px;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      padding: 14px 10px;
+      display: block;
+    }
+
+    nav ul li a:hover {
+      background-color: #333;
+    }
+
+    .main-content {
+      height: calc(100vh - 60px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .left-section {
+      color: white;
+      text-shadow: 2px 2px 4px #000;
+      padding: 40px;
+    }
+
+    .left-section h1 {
+      font-size: 48px;
+      color: #fff176;
+    }
+
+    .left-section p {
+      font-size: 28px;
+      margin-top: 10px;
+      color: #fef9c3;
+    }
+
+    .form-card {
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      color: black;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+        padding: 20px;
+      }
+
+      .left-section {
+        text-align: center;
+        padding-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="background">
+  <!-- Navbar -->
+  <nav>
+    <div class="logo">Real Estate</div>
+    <ul>
+      <li><a href="Home.html">Home</a></li>
+    </ul>
+  </nav>
+
+  <!-- Content -->
+  <div class="main-content container-fluid">
+    <div class="row w-100 align-items-center">
+      <!-- Left Side -->
+      <div class="col-md-4 left-section">
+        <h1>WELCOME</h1>
+        <p>Real Estate Portal</p>
+      </div>
+
+      <!-- Right Side - Login Form -->
+      <div class="col-md-6 d-flex justify-content-center">
+        <div class="form-card">
+          <h4 class="text-center mb-4">Login</h4>
+          <form id="loginForm">
+            <div class="mb-3">
+              <label for="email" class="form-label">Email address</label>
+              <input type="email" class="form-control" id="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="password" required>
+            </div>
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-warning text-dark">Login</button>
+            </div>
+
+            <div id="loginError" class="text-danger mt-2 text-center"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JavaScript -->
+<script>
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault(); // Prevent default form submission
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    fetch('http://localhost:8080/api/admins/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    })
+            .then(response => {
+              if (response.ok) {
+                // Login success, redirect to admin
+                window.location.href = 'Adminpage.html';
+              } else {
+                throw new Error('Invalid email or password');
+              }
+            })
+            .catch(error => {
+              document.getElementById('loginError').textContent = error.message;
+            });
+  });
+</script>
+
+</body>
+</html>

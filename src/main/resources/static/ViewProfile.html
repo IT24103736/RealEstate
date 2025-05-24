@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('https://beyond-h2020.eu/wp-content/uploads/2022/11/house-g001b32d44_1920-1024x683.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .dashboard-container {
+      max-width: 600px;
+      margin: auto;
+      background-color: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 0 10px #ccc;
+      margin-top: 100px;
+    }
+    h2 {
+      margin-bottom: 30px;
+      text-align: center;
+      color: #333;
+    }
+    .profile-field {
+      margin-bottom: 15px;
+    }
+    .profile-label {
+      font-weight: bold;
+      color: #555;
+    }
+    .btn-group {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    #editForm {
+      margin-top: 30px;
+      display: none;
+    }
+    #editForm input {
+      margin-bottom: 15px;
+    }
+
+    nav {
+      background-color: black;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      height: 60px;
+    }
+
+    .logo {
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    nav ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+
+    nav ul li {
+      margin-left: 20px;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      padding: 14px 10px;
+      display: block;
+    }
+
+    nav ul li a:hover {
+      background-color: #333;
+    }
+
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Real Estate</div>
+  <ul>
+    <li><a href="Home.html">Home</a></li>
+    <li><a href="user-dashboard.html">Dashboard</a></li>
+
+  </ul>
+</nav>
+<div class="dashboard-container">
+  <h2> Your Profile Managment</h2>
+  <div class="profile-field">
+    <span class="profile-label">Name: </span>
+    <span id="userName"></span>
+  </div>
+  <div class="profile-field">
+    <span class="profile-label">Email: </span>
+    <span id="userEmail"></span>
+  </div>
+  <div class="profile-field">
+    <span class="profile-label">Role: </span>
+    <span id="userRole"></span>
+  </div>
+
+  <div class="btn-group">
+    <button id="editBtn" class="btn btn-primary">Edit</button>
+    <button id="deleteBtn" class="btn btn-danger">Delete</button>
+    <button id="logoutBtn" class="btn btn-secondary ms-auto">Logout</button>
+  </div>
+
+  <!-- Edit form -->
+  <form id="editForm">
+    <h4>Edit Your Details</h4>
+    <input type="text" id="editName" class="form-control" placeholder="Name" required />
+    <input type="email" id="editEmail" class="form-control" placeholder="Email" required />
+    <input type="text" id="editRole" class="form-control" placeholder="Role" readonly />
+    <button type="submit" class="btn btn-success">Save</button>
+    <button type="button" id="cancelEdit" class="btn btn-secondary">Cancel</button>
+    <div id="editMessage" class="mt-2"></div>
+  </form>
+</div>
+
+<script>
+  const loggedUser = JSON.parse(localStorage.getItem('loggedUser'));
+
+  if (!loggedUser) {
+    window.location.href = 'Userlogin.html';
+  } else {
+    document.getElementById('userName').textContent = loggedUser.name || loggedUser.username || 'N/A';
+    document.getElementById('userEmail').textContent = loggedUser.email || 'N/A';
+    document.getElementById('userRole').textContent = loggedUser.role || 'N/A';
+  }
+
+  const editBtn = document.getElementById('editBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const editForm = document.getElementById('editForm');
+  const editName = document.getElementById('editName');
+  const editEmail = document.getElementById('editEmail');
+  const editRole = document.getElementById('editRole');
+  const cancelEdit = document.getElementById('cancelEdit');
+  const editMessage = document.getElementById('editMessage');
+
+  // Show edit form with current values
+  editBtn.addEventListener('click', () => {
+    editName.value = loggedUser.name || loggedUser.username || '';
+    editEmail.value = loggedUser.email || '';
+    editRole.value = loggedUser.role || '';
+    editMessage.textContent = '';
+    editForm.style.display = 'block';
+  });
+
+  cancelEdit.addEventListener('click', () => {
+    editForm.style.display = 'none';
+  });
+
+  // Handle form submit to update user info
+  editForm.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const updatedUser = {
+      ...loggedUser,
+      name: editName.value.trim(),
+      email: editEmail.value.trim(),
+      // role is not editable
+    };
+
+    fetch(`http://localhost:8080/users/${loggedUser.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updatedUser)
+    })
+            .then(response => {
+              if (!response.ok) throw new Error('Failed to update user');
+              // Instead of response.json(), use response.text()
+              return response.text();
+            })
+            .then(message => {
+              // Since backend doesn't return updated user JSON,
+              // update localStorage manually with updatedUser
+              localStorage.setItem('loggedUser', JSON.stringify(updatedUser));
+              document.getElementById('userName').textContent = updatedUser.name || updatedUser.username || 'N/A';
+              document.getElementById('userEmail').textContent = updatedUser.email || 'N/A';
+              editMessage.style.color = 'green';
+              editMessage.textContent = message; // "User updated"
+              setTimeout(() => {
+                editForm.style.display = 'none';
+                editMessage.textContent = '';
+              }, 1500);
+            })
+            .catch(err => {
+              editMessage.style.color = 'red';
+              editMessage.textContent = err.message;
+            });
+
+  });
+
+  deleteBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      fetch(`http://localhost:8080/users/${loggedUser.id}`, {
+        method: 'DELETE',
+      })
+              .then(response => {
+                if (!response.ok) throw new Error('Failed to delete user');
+                alert('Account deleted successfully.');
+                localStorage.removeItem('loggedUser');
+                window.location.href = 'Userlogin.html';
+              })
+              .catch(err => {
+                alert('Error deleting account: ' + err.message);
+              });
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('loggedUser');
+    window.location.href = 'Userlogin.html';
+  });
+</script>
+</body>
+</html>

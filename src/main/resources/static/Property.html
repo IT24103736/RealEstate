@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Property Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('https://beyond-h2020.eu/wp-content/uploads/2022/11/house-g001b32d44_1920-1024x683.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+
+    header {
+      background-color: #003366;
+      padding: 10px;
+      color: white;
+      text-align: center;
+      border-radius: 10px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: aliceblue;
+    }
+
+    .card {
+      background-color: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #003366;
+    }
+
+    .property-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .property-form input,
+    .property-form select {
+      flex: 1 1 200px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .property-form button {
+      padding: 10px 20px;
+      background-color: #003366;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .property-form button:hover {
+      background-color: #0051a3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+    }
+
+    .edit-btn, .delete-btn {
+      padding: 6px 12px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .edit-btn {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .placeholder-img {
+      max-width: 100%;
+      height: auto;
+      margin: 10px 0;
+    }
+
+    nav {
+      background-color: black;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      height: 60px;
+    }
+
+    .logo {
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    nav ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+
+    nav ul li {
+      margin-left: 20px;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      padding: 14px 10px;
+      display: block;
+    }
+
+    nav ul li a:hover {
+      background-color: #333;
+    }
+
+    .edit{
+      background-color: chartreuse;
+    }
+    .delete{
+      background-color: red;
+    }
+  </style>
+</head>
+
+<body>
+<div class="background-overlay">
+  <nav>
+    <div class="logo">Real Estate</div>
+    <ul>
+      <li><a href="Adminpage.html">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <main class="container">
+    <header>
+      <h4>Property Management System</h4>
+    </header>
+
+    <!-- Property Dashboard -->
+    <section class="card">
+      <h2>🏢 Property Dashboard</h2>
+      <p>Overview of admin activity, system statistics, and recent changes.</p>
+      <img src="admin.png" alt="Admin Overview" class="placeholder-img">
+      <p>[Placeholder for dynamic stats and charts]</p>
+    </section>
+
+    <!-- Add New Property -->
+    <section class="card">
+      <h2>📝 Add New Property</h2>
+      <form class="property-form" id="propertyForm">
+        <input type="text" id="title" placeholder="Property Title" required>
+        <input type="text" id="location" placeholder="Location" required>
+        <input type="number" id="price" placeholder="Price" required>
+        <select id="status">
+          <option value="For Sale">For Sale</option>
+          <option value="For Rent">For Rent</option>
+        </select>
+        <button type="submit">Add Property</button>
+      </form>
+    </section>
+
+    <!-- Property Management Panel -->
+    <section class="card">
+      <h2>🗂️ Property Management Panel</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>Title</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Posted Date</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="propertyTableBody">
+
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  document.getElementById("propertyForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const title = document.getElementById("title").value;
+    const location = document.getElementById("location").value;
+    const price = parseFloat(document.getElementById("price").value);
+    const status = document.getElementById("status").value === "For Sale";
+
+    const property = {
+      title: title,
+      location: location,
+      email: "admin@example.com", // Use real email if needed
+      forSale: status,
+      price: price
+    };
+
+    fetch("http://localhost:8080/properties/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(property)
+    })
+            .then(res => {
+              if (!res.ok) throw new Error("Network response was not ok");
+              return res.text(); //  backend returns plain text
+            })
+            .then(message => {
+              alert(message); // show "Property added successfully!"
+              document.getElementById("propertyForm").reset();
+            })
+            .catch(error => {
+              console.error("Error:", error);
+              alert("Failed to add property.");
+            });
+  });
+</script>
+<!-- Get Method Use for fetching all properties -->
+<script>
+  const apiBase = 'http://localhost:8080/properties';
+
+  async function fetchProperties() {
+    const response = await fetch(`${apiBase}/all`);
+    const properties = await response.json();
+    const tbody = document.getElementById('propertyTableBody');
+    tbody.innerHTML = '';
+
+    properties.forEach(p => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${p.title}</td>
+        <td>${p.email}</td>
+        <td>${p.forSale ? 'For Sale' : 'Not for Sale'}</td>
+        <td>${p.postedDate}</td>
+        <td>
+         <button class="edit" onclick="editProperty('${encodeURIComponent(p.title)}')">Edit</button>
+         <button   class="delete" onclick="deleteProperty('${encodeURIComponent(p.title)}')">Delete</button>
+
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  async function deleteProperty(title) {
+    if (confirm('Are you sure you want to delete this property?')) {
+      await fetch(`${apiBase}/delete/${title}`, { method: 'DELETE' });
+      fetchProperties(); // refresh table
+    }
+  }
+
+  async function editProperty(title) {
+    const res = await fetch(`${apiBase}/get/${title}`);
+    const p = await res.json();
+
+    const newTitle = prompt('New Title:', p.title);
+    const newEmail = prompt('New Email:', p.email);
+    const newPrice = prompt('New Price:', p.price);
+    const newForSale = confirm('Is the property For Sale?');
+
+    const updated = {
+      ...p,
+      title: newTitle,
+      email: newEmail,
+      price: parseFloat(newPrice),
+      forSale: newForSale
+    };
+
+    await fetch(`${apiBase}/update/${title}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    });
+
+    fetchProperties();
+  }
+
+
+  // Run on page load
+  window.onload = fetchProperties;
+</script>
+
+</body>
+</html>
